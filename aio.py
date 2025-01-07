@@ -1,4 +1,5 @@
 import subprocess
+from sqlworker import init_database
 
 scripts = [
     "scraper_otodom.py",
@@ -7,6 +8,7 @@ scripts = [
 ]
 
 def run_script(script_name):
+    init_database()
     print(f"Uruchamianie: {script_name}")
     try:
         result = subprocess.run(

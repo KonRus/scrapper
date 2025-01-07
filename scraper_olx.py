@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
+from listing import Listing
+from sqlworker import DatabaseWorker
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
@@ -50,7 +52,8 @@ def save_to_csv(filename, data):
 
 def scrape_olx_city(city, base_url):
     print(f"Scraping OLX listings for {city}...")
-    all_listings = []
+    db = DatabaseWorker()
+    all_listings = 0
     page = 1
 
     url = f"{base_url}{page}"
@@ -87,27 +90,23 @@ def scrape_olx_city(city, base_url):
             location_elem = listing.select_one('p.css-1mwdrlh')
             area_elem = listing.select_one('span.css-1cd0guq')
 
-            title = title_elem.text.strip() if title_elem else "Brak tytułu"
-            price = extract_price(price_elem.text.strip()) if price_elem else "Brak ceny"
-            location = location_elem.text.strip() if location_elem else "Brak lokalizacji"
-            area = extract_area(area_elem.text.strip()) if area_elem else "Brak metrażu"
+            title = title_elem.text.strip() if title_elem else None
+            price = extract_price(price_elem.text.strip()) if price_elem else None
+            location = location_elem.text.strip() if location_elem else None
+            area = extract_area(area_elem.text.strip()) if area_elem else None
 
             city_name, district = parse_location(location)
+            temp_listing = Listing(title, price, city_name, district, area)
 
-            page_data.append([title, price, city_name, district, area])
-
-        save_to_csv(f"olx_{city}_listings.csv", page_data)
-        all_listings.extend(page_data)
+            page_data.append(temp_listing)
+        db.upsert_listings(page_data, "olx")
+        all_listings += len(page_data)
         page += 1
 
-    print(f"Finished scraping OLX for {city}. Total listings: {len(all_listings)}")
+    print(f"Finished scraping OLX for {city}. Total listings: {all_listings}")
 
 def main():
     for city, base_url in olx_urls.items():
-        filename = f"olx_{city}_listings.csv"
-        with open(filename, mode='w', newline='', encoding='utf-8') as file:
-            writer = csv.writer(file)
-            writer.writerow(["Title", "Price (zł)", "City", "District", "Area (m²)"])
         scrape_olx_city(city, base_url)
 
 if __name__ == "__main__":
