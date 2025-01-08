@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
+from listing import Listing
+from sqlworker import DatabaseWorker
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -54,7 +56,8 @@ def clean_surface(surface):
 
 def scrape_city(city, base_url):
     print(f"Scraping listings for {city}...")
-    all_listings = []
+    db = DatabaseWorker()
+    all_listings = 0
     page = 1
 
     first_url = f"{base_url}{page}"
@@ -107,21 +110,19 @@ def scrape_city(city, base_url):
 
             price = clean_price(price)
             surface_area = clean_surface(surface_area)
+            temp_listing = Listing(title, price, miasto, dzielnica, surface_area)
 
-            page_data.append([title, price, dzielnica, miasto, surface_area])
+            page_data.append(temp_listing)
 
-        save_to_csv(city, page_data)
-        all_listings.extend(page_data)
+        db.upsert_listings(page_data, "otodom")
+        all_listings += len(page_data)
 
         page += 1
 
-    print(f"Finished scraping for {city}. Total listings: {len(all_listings)}")
+    print(f"Finished scraping for {city}. Total listings: {all_listings}")
+def main():
+    for city, base_url in cities.items():
+      scrape_city(city, base_url)
 
-for city in cities.keys():
-    filename = f"{city}_listings.csv"
-    with open(filename, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(["Title", "Price", "District", "City", "Area"])
-
-for city, base_url in cities.items():
-    scrape_city(city, base_url)
+if __name__ == "__main__":
+    main()
