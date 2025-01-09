@@ -104,14 +104,16 @@ def scrape_trojmiasto_city(city, base_url):
             price_elem = listing.select_one('p.list__item__price__value')
             location_elem = listing.select_one('p.list__item__content__subtitle')
             area_elem = listing.select_one('li.details--icons--element--powierzchnia p.list__item__details__icons__element__desc')
-
+            url_elem = listing.select_one('a.listItemFirstPhoto')
+            
             title = title_elem['title'].strip() if title_elem else None
             price = extract_price(price_elem.text.strip()) if price_elem else None
             location = location_elem.text.strip() if location_elem else None
             area = extract_area(area_elem.text.strip()) if area_elem else None
+            listing_url = url_elem.attrs['href'].strip() if url_elem else None
 
             city_name, district = parse_location(location)
-            temp_listing = Listing(title, price, city_name, district, area)
+            temp_listing = Listing(title, price, city_name, district, area, listing_url)
             page_data.append(temp_listing)
 
         db.upsert_listings(page_data, "trojmiasto")
