@@ -2,12 +2,13 @@ class ListingValidationError(Exception):
     pass
 
 class Listing:
-    def __init__(self, title, price, city, district, area):
+    def __init__(self, title, price, city, district, area, url):
         self.title = title
         self.price = price
         self.city = city
         self.district = district
         self.area = area
+        self.url = url
 
     @property
     def title(self):
@@ -64,6 +65,14 @@ class Listing:
                 raise ListingValidationError("Area must be positive")
         except ValueError:
             raise ListingValidationError(f"Invalid area format: {value}")
+        
+    @property
+    def url(self):
+        return self._url
+    
+    @url.setter
+    def url(self, value):
+        self._url = str(value).strip() if value else None
 
     def __str__(self):
         return f"{self.title} | {self.price} zł | {self.city} | {self.district} | {self.area} m²"

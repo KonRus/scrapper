@@ -17,7 +17,8 @@ def init_database():
                     price INTEGER,
                     city VARCHAR(15) NULL,
                     district VARCHAR(50) NULL,
-                    area REAL NULL
+                    area REAL NULL,
+                    url VARCHAR(255) NULL
                 )
             ''')
             conn.commit()
@@ -51,6 +52,7 @@ class DatabaseWorker:
                     listing.city, 
                     listing.district, 
                     listing.area,
+                    listing.url,
                     self.existing_records[(source, listing.title)]
                 ))
             else:
@@ -60,7 +62,8 @@ class DatabaseWorker:
                     listing.price,
                     listing.city,
                     listing.district,
-                    listing.area
+                    listing.area,
+                    listing.url
                 ))
         try:
             with sqlite3.connect(self.db_name) as conn:
@@ -70,15 +73,15 @@ class DatabaseWorker:
                 if updates:
                     cursor.executemany('''
                         UPDATE listings 
-                        SET price = ?, city = ?, district = ?, area = ?
+                        SET price = ?, city = ?, district = ?, area = ?, url = ?
                         WHERE listing_id = ?
                     ''', updates)
                 
                 # Process inserts
                 if inserts:
                     cursor.executemany('''
-                        INSERT INTO listings (page, title, price, city, district, area)
-                        VALUES (?, ?, ?, ?, ?, ?)
+                        INSERT INTO listings (page, title, price, city, district, area, url)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
                     ''', inserts)
                     
                     # Update cache with new records

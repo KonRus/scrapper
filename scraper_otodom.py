@@ -91,10 +91,12 @@ def scrape_city(city, base_url):
             title_elem = listing.find('p', class_='css-u3orbr e1g5xnx10')
             price_elem = listing.find('span', class_="css-2bt9f1 evk7nst0")
             location_elem = listing.find('p', class_='css-42r2ms eejmx80')
+            url_elem = listing.find('a', class_='css-16vl3c1 e17g0c820')
 
-            title = title_elem.text.strip() if title_elem else "Brak tytułu"
-            price = price_elem.text.strip() if price_elem else "Brak ceny"
-            location = location_elem.text.strip() if location_elem else "Brak lokalizacji"
+            title = title_elem.text.strip() if title_elem else None
+            price = price_elem.text.strip() if price_elem else None
+            location = location_elem.text.strip() if location_elem else None
+            listing_url = url_elem.attrs['href'].replace("/pl", "otodom.pl/pl").strip() if url_elem else None
 
             dzielnica, miasto, wojewodztwo = parse_location(location)
 
@@ -110,7 +112,7 @@ def scrape_city(city, base_url):
 
             price = clean_price(price)
             surface_area = clean_surface(surface_area)
-            temp_listing = Listing(title, price, miasto, dzielnica, surface_area)
+            temp_listing = Listing(title, price, miasto, dzielnica, surface_area, listing_url)
 
             page_data.append(temp_listing)
 

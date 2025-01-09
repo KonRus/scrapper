@@ -34,6 +34,13 @@ def extract_area(area_text):
 def extract_price(price_text):
     return price_text.split("zł")[0].strip().replace(" ", "")
 
+def extract_url(url):
+    if(url is None):
+        return None
+    elif(url.startswith("/d")):
+        return url.replace("/d", "www.olx.pl/d")
+    return url
+
 def get_max_page(soup):
     page_elements = soup.find_all('li', {'data-testid': 'pagination-list-item'})
     max_page = 1
@@ -89,14 +96,16 @@ def scrape_olx_city(city, base_url):
             price_elem = listing.select_one('p[data-testid="ad-price"].css-13afqrm')
             location_elem = listing.select_one('p.css-1mwdrlh')
             area_elem = listing.select_one('span.css-1cd0guq')
+            url_elem = listing.select_one('a.css-qo0cxu')
 
             title = title_elem.text.strip() if title_elem else None
             price = extract_price(price_elem.text.strip()) if price_elem else None
             location = location_elem.text.strip() if location_elem else None
             area = extract_area(area_elem.text.strip()) if area_elem else None
+            listing_url = extract_url(url_elem.attrs['href'])
 
             city_name, district = parse_location(location)
-            temp_listing = Listing(title, price, city_name, district, area)
+            temp_listing = Listing(title, price, city_name, district, area, listing_url)
 
             page_data.append(temp_listing)
         db.upsert_listings(page_data, "olx")
